@@ -1,0 +1,22 @@
+# Virtual Environment
+finalproject/
+venv/
+.venv/
+env/
+
+# Python Cache & Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDE & Editor Settings
+.vscode/
+.idea/
+
+# CatBoost & Logs
+catboost_info/
+*.log
+
+# Operating System Files
+.DS_Store
+Thumbs.db

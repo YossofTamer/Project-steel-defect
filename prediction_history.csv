@@ -1,0 +1,80 @@
+Saved At,Machine Type,Operating Mode,Date,Operating Hour,Vibration RMS,Motor Temperature,Average Phase Current,Pressure Level,RPM,Hours Since Maintenance,Ambient Temperature,Day of Week,Month,Temperature Difference,Vibration/RPM Ratio,Current/RPM Ratio,Pressure/RPM Ratio,Maintenance Load,Prediction,Failure Probability,Normal Probability,AI Analysis
+2026-09-14 22:05:18,CNC,idle,2026-09-14,12,1.0,70.0,10.0,5.0,1500.0,100.0,25.0,0,9,45.0,0.0006662225183211,0.0066622251832111,0.0033311125916055,150000.0,LOW RISK,0.67,99.33,
+2026-09-14 22:05:37,CNC,idle,2026-09-14,12,99999999999999.0,70.0,10.0,5.0,1500.0,100.0,25.0,0,9,45.0,66622251832.11126,0.0066622251832111,0.0033311125916055,150000.0,HIGH RISK,53.04,46.96,
+2026-09-14 22:05:54,CNC,idle,2026-09-14,12,99999999999999.0,9999999.0,9999999999.0,5.0,1500.0,100.0,1e+18,0,9,-9.9999999999e+17,66622251832.11126,6662225.18254497,0.0033311125916055,150000.0,HIGH RISK,99.16,0.84,
+2026-09-14 22:05:55,CNC,idle,2026-09-14,12,99999999999999.0,9999999.0,9999999999.0,5.0,1500.0,100.0,1e+18,0,9,-9.9999999999e+17,66622251832.11126,6662225.18254497,0.0033311125916055,150000.0,HIGH RISK,99.16,0.84,
+2026-09-14 22:06:07,CNC,idle,2026-09-14,12,99999999999999.0,9999999.0,9999999999.0,0.0,1500.0,0.0,0.0,0,9,9999999.0,66622251832.11126,6662225.18254497,0.0,0.0,HIGH RISK,99.73,0.27,
+2026-09-14 22:06:09,CNC,idle,2026-09-14,12,99999999999999.0,9999999.0,9999999999.0,0.0,1500.0,0.0,0.0,0,9,9999999.0,66622251832.11126,6662225.18254497,0.0,0.0,HIGH RISK,99.73,0.27,
+2026-09-14 22:06:14,CNC,idle,2026-09-14,12,99999999999999.0,9999999.0,0.0,0.0,0.0,0.0,0.0,0,9,9999999.0,99999999999999.0,0.0,0.0,0.0,HIGH RISK,99.47,0.53,
+2026-09-14 22:06:17,CNC,idle,2026-09-14,12,99999999999999.0,0.0,0.0,0.0,0.0,0.0,0.0,0,9,0.0,99999999999999.0,0.0,0.0,0.0,LOW RISK,0.05,99.95,
+2026-09-14 22:06:29,CNC,idle,2026-09-14,12,0.0,1e+40,0.0,0.0,0.0,0.0,0.0,0,9,1e+40,0.0,0.0,0.0,0.0,LOW RISK,0.85,99.15,
+2026-09-14 22:06:34,CNC,idle,2026-09-14,12,0.0,1e+21,0.0,0.0,0.0,0.0,0.0,0,9,1e+21,0.0,0.0,0.0,0.0,LOW RISK,0.85,99.15,
+2026-09-14 22:08:03,CNC,idle,2026-09-14,12,1.0,70.0,10.0,5.0,1500.0,100.0,25.0,0,9,45.0,0.0006662225183211,0.0066622251832111,0.0033311125916055,150000.0,LOW RISK,0.67,99.33,
+2026-09-14 22:21:39,CNC,idle,2026-09-14,12,1.0,70.0,10.0,5.0,1500.0,100.0,25.0,0,9,45.0,0.0006662225183211,0.0066622251832111,0.0033311125916055,150000.0,LOW RISK,0.67,99.33,"LLM is not connected yet.
+
+Make sure OPENAI_API_KEY is set in Windows, then restart the terminal and Streamlit."
+2026-09-14 22:23:25,CNC,idle,2026-09-14,12,1.0,70.0,10.0,5.0,1500.0,100.0,25.0,0,9,45.0,0.0006662225183211,0.0066622251832111,0.0033311125916055,150000.0,LOW RISK,0.67,99.33,"## Why this result?
+- The CatBoost model predicts **LOW RISK**, with a **0.67% failure probability** and **99.33% normal probability**.
+- Vibration is **1.0 RMS**, and the vibration/RPM ratio is low at **0.000666**, indicating limited vibration relative to the operating speed.
+- Current is **10.0 A**, pressure is **5.0**, and the machine is in **idle mode**; however, the **70°C motor temperature** and **45°C temperature difference** should still be monitored.
+
+## Recommended action
+- Continue routine monitoring of motor temperature, vibration, current, and pressure for changes or abnormal trends.
+- Review maintenance status, since the machine has operated **100 hours since maintenance**.
+- Inspect cooling, ventilation, and temperature-related components during the next scheduled maintenance; this is precautionary and does not confirm a mechanical failure."
+2026-09-14 22:25:24,CNC,idle,2026-09-14,12,99999999999.0,9999999999999.0,99999999999999.0,5.0,1500.0,100.0,25.0,0,9,9999999999974.0,66622251.8314457,66622251832.11126,0.0033311125916055,150000.0,HIGH RISK,100.0,0.0,"## Why this result?
+
+- The model identified extremely high vibration, motor temperature, and phase current values, with corresponding extreme temperature difference and vibration/current ratios.
+- The readings are highly abnormal for an idle CNC machine, even though RPM is 1,500 and pressure is 5.0.
+- The calculated maintenance load is high at 150,000, and the machine has operated 100 hours since maintenance.
+
+## Recommended action
+
+- Follow site safety procedures and consider a controlled shutdown or restricted operation pending assessment.
+- Verify the vibration, temperature, and current sensors, wiring, units, and data acquisition system for saturation or scaling errors.
+- If readings are confirmed, have qualified maintenance personnel inspect the motor, drive, bearings, and related mechanical/electrical systems."
+2026-09-14 22:25:49,CNC,idle,2026-09-14,12,0.0,0.0,0.0,5.0,1500.0,100.0,25.0,0,9,-25.0,0.0,0.0,0.0033311125916055,150000.0,LOW RISK,0.0,100.0,"## Why this result?
+- The machine is idle, with zero vibration, motor temperature, and phase current; the vibration/RPM and current/RPM ratios are also zero.
+- Pressure is moderate at 5.0, while the supplied values show no measured vibration or thermal stress.
+- These inputs align with the CatBoost prediction of **LOW RISK** with **0.0% failure probability** and **100.0% normal probability**.
+
+## Recommended action
+- Verify that the zero temperature, vibration, and current readings are valid and that the sensors are functioning correctly.
+- Continue routine monitoring when the CNC returns to active operation, especially for vibration, temperature, and current changes.
+- Review maintenance scheduling because the machine has **100 hours since maintenance**; this does not indicate a confirmed failure."
+2026-09-14 22:27:57,CNC,idle,2026-09-14,12,1.0,70.0,10.0,5.0,1500.0,100.0,25.0,0,9,45.0,0.0006662225183211,0.0066622251832111,0.0033311125916055,150000.0,LOW RISK,0.67,99.33,"## Why this result?
+- The CatBoost model predicts **LOW RISK**, with a **0.67% failure probability** and **99.33% normal probability**.
+- Vibration is **1.0 RMS**, while the vibration/RPM ratio is low at **0.000666**, indicating limited vibration relative to speed.
+- Motor temperature is **70°C** with an ambient temperature of **25°C**; current is **10 A** and pressure is **5.0**, with no supplied value indicating an abnormal condition.
+
+## Recommended action
+- Continue routine monitoring of vibration, temperature, current, pressure, and RPM.
+- Schedule standard maintenance based on the **100 hours since maintenance** and the machine’s maintenance plan.
+- Review trends during future operating cycles, especially if temperature or vibration increases."
+2026-09-16 03:56:20,CNC,idle,2026-09-16,10,1.0,70.0,10.0,5.0,1500.0,100.0,25.0,2,9,45.0,0.0006662225183211,0.0066622251832111,0.0033311125916055,150000.0,LOW RISK,3.88,96.12,"LLM is not connected yet.
+
+Make sure OPENAI_API_KEY is set in Windows, then restart the terminal and Streamlit."
+2026-09-16 03:57:48,CNC,idle,2026-09-16,12,1.0,70.0,10.0,5.0,1500.0,100.0,25.0,2,9,45.0,0.0006662225183211,0.0066622251832111,0.0033311125916055,150000.0,LOW RISK,3.92,96.08,"LLM is not connected yet.
+
+Make sure OPENAI_API_KEY is set in Windows, then restart the terminal and Streamlit."
+2026-09-16 04:06:21,CNC,normal,2026-09-16,10,0.85,62.0,8.5,4.8,1650.0,45.0,24.0,2,9,38.0,0.0005148394912174,0.0051483949121744,0.0029073288915808,74250.0,LOW RISK,0.44,99.56,"ℹ️ OpenAI API key not detected.
+
+To enable automated root-cause analysis and natural-language recommendations, configure the OPENAI_API_KEY environment variable and restart the application."
+2026-09-16 04:06:31,CNC,normal,2026-09-16,10,0.85,62.0,8.5,60.8,1650.0,45.0,24.0,2,9,38.0,0.0005148394912174,0.0051483949121744,0.0368261659600242,74250.0,LOW RISK,0.88,99.12,"ℹ️ OpenAI API key not detected.
+
+To enable automated root-cause analysis and natural-language recommendations, configure the OPENAI_API_KEY environment variable and restart the application."
+2026-09-16 04:06:48,CNC,normal,2026-09-16,10,17.0,62.0,8.5,60.8,5000.0,45.0,24.0,2,9,38.0,0.0033993201359728,0.0016996600679864,0.0121575684863027,225000.0,LOW RISK,19.93,80.07,"ℹ️ OpenAI API key not detected.
+
+To enable automated root-cause analysis and natural-language recommendations, configure the OPENAI_API_KEY environment variable and restart the application."
+2026-09-16 04:07:09,CNC,normal,2026-09-16,10,17.0,95.5,57.5,60.8,5000.0,45.0,74.0,2,9,21.5,0.0033993201359728,0.011497700459908,0.0121575684863027,225000.0,HIGH RISK,98.72,1.28,"ℹ️ OpenAI API key not detected.
+
+To enable automated root-cause analysis and natural-language recommendations, configure the OPENAI_API_KEY environment variable and restart the application."
+2026-09-16 04:07:14,Compressor,peak,2026-09-16,14,4.85,105.0,22.0,8.9,2100.0,580.0,34.0,2,9,71.0,0.0023084245597334,0.0104712041884816,0.0042360780580675,1218000.0,HIGH RISK,100.0,0.0,"ℹ️ OpenAI API key not detected.
+
+To enable automated root-cause analysis and natural-language recommendations, configure the OPENAI_API_KEY environment variable and restart the application."
+2026-09-16 04:07:17,Pump,peak,2026-09-16,15,2.4,82.5,13.8,6.7,1400.0,240.0,28.0,2,9,54.5,0.001713062098501,0.0098501070663811,0.0047822983583154,336000.0,HIGH RISK,93.23,6.77,"ℹ️ OpenAI API key not detected.
+
+To enable automated root-cause analysis and natural-language recommendations, configure the OPENAI_API_KEY environment variable and restart the application."
+2026-09-16 04:07:19,CNC,normal,2026-09-16,10,0.85,62.0,8.5,4.8,1650.0,45.0,24.0,2,9,38.0,0.000514839491217444,0.00514839491217444,0.00290732889158086,74250.0,LOW RISK,0.44,99.56,"ℹ️ OpenAI API key not detected.
+
+To enable automated root-cause analysis and natural-language recommendations, configure the OPENAI_API_KEY environment variable and restart the application."
