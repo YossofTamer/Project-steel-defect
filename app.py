@@ -317,14 +317,11 @@ def get_llm_client():
 
             # Prefer known reliable chat models in priority order
             preferred = [
-                "llama-3.3-70b-versatile",
-                "meta-llama/llama-4-scout-17b-16e-instruct",
-                "meta-llama/llama-4-maverick-17b-128e-instruct",
-                "llama-3.1-8b-instant",
-                "llama3-8b-8192",
-                "llama3-70b-8192",
-                "compound-beta",
-                "compound-beta-mini",
+                "qwen/qwen3.8-27b",
+                "openai/gpt-oss-120b",
+                "openai/gpt-oss-20b",
+                "groq/compound-mini",
+                "allam-2-7b",
             ]
             # Keep preferred models that the key actually has access to
             candidate_models = [m for m in preferred if m in all_model_ids]
@@ -336,11 +333,12 @@ def get_llm_client():
                     m for m in all_model_ids
                     if "whisper" not in m
                     and "tts" not in m
-                    and "vision" not in m.lower()
+                    and "guard" not in m
+                    and "orpheus" not in m
                 ]
         except Exception:
             # If model listing fails, try a safe minimal set
-            candidate_models = ["llama-3.1-8b-instant", "llama-3.3-70b-versatile"]
+            candidate_models = ["qwen/qwen3.8-27b", "openai/gpt-oss-20b"]
     else:
         client = OpenAI(api_key=api_key)
         candidate_models = ["gpt-4o-mini", "gpt-3.5-turbo", "gpt-4o"]
