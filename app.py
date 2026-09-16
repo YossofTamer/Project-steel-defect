@@ -279,26 +279,52 @@ def load_history():
 
 
 # =========================================================
-# OPENAI LLM
+# LLM INTEGRATION (SUPPORTS BOTH GROQ & OPENAI)
 # =========================================================
 
+def get_api_key():
+    key = None
+    try:
+        if "OPENAI_API_KEY" in st.secrets:
+            key = st.secrets["OPENAI_API_KEY"]
+        elif "GROQ_API_KEY" in st.secrets:
+            key = st.secrets["GROQ_API_KEY"]
+    except Exception:
+        pass
+
+    if not key:
+        key = os.getenv("OPENAI_API_KEY") or os.getenv("GROQ_API_KEY")
+    return key
+
+
 @st.cache_resource
-def get_openai_client():
-    api_key = os.getenv("OPENAI_API_KEY")
+def get_llm_client():
+    api_key = get_api_key()
 
     if not api_key:
-        return None
+        return None, None
 
-    return OpenAI(api_key=api_key)
+    # Auto-detect Groq key vs OpenAI key
+    if api_key.startswith("gsk_"):
+        client = OpenAI(
+            api_key=api_key,
+            base_url="https://api.groq.com/openai/v1"
+        )
+        model_name = "llama-3.3-70b-versatile"
+    else:
+        client = OpenAI(api_key=api_key)
+        model_name = "gpt-4o-mini"
+
+    return client, model_name
 
 
 def generate_ai_analysis(record):
-    client = get_openai_client()
+    client, model_name = get_llm_client()
 
     if client is None:
         return (
             "LLM is not connected yet.\n\n"
-            "Make sure OPENAI_API_KEY is set in Windows, then restart "
+            "Make sure OPENAI_API_KEY or GROQ_API_KEY is set, then restart "
             "the terminal and Streamlit."
         )
 
@@ -347,16 +373,21 @@ the result and suggests actions.
 """
 
     try:
-        response = client.responses.create(
-            model="gpt-5.6-luna",
-            instructions=(
-                "You are a concise predictive-maintenance assistant. "
-                "Never invent sensor readings or claim certainty."
-            ),
-            input=prompt
+        response = client.chat.completions.create(
+            model=model_name,
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a concise predictive-maintenance assistant. "
+                        "Never invent sensor readings or claim certainty."
+                    )
+                },
+                {"role": "user", "content": prompt}
+            ]
         )
 
-        return response.output_text.strip()
+        return response.choices[0].message.content.strip()
 
     except Exception as e:
         return f"LLM error: {str(e)}"
