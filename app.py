@@ -302,7 +302,7 @@ def get_llm_client():
     api_key = get_api_key()
 
     if not api_key:
-        return None, None
+        return None, []
 
     # Auto-detect Groq key vs OpenAI key
     if api_key.startswith("gsk_"):
@@ -310,16 +310,22 @@ def get_llm_client():
             api_key=api_key,
             base_url="https://api.groq.com/openai/v1"
         )
-        model_name = "llama-3.3-70b-versatile"
+        candidate_models = [
+            "llama-3.1-8b-instant",
+            "llama3-8b-8192",
+            "llama3-70b-8192",
+            "mixtral-8x7b-32768",
+            "gemma2-9b-it"
+        ]
     else:
         client = OpenAI(api_key=api_key)
-        model_name = "gpt-4o-mini"
+        candidate_models = ["gpt-4o-mini", "gpt-3.5-turbo", "gpt-4o"]
 
-    return client, model_name
+    return client, candidate_models
 
 
 def generate_ai_analysis(record):
-    client, model_name = get_llm_client()
+    client, candidate_models = get_llm_client()
 
     if client is None:
         return (
@@ -372,25 +378,28 @@ The CatBoost prediction is the actual prediction. The LLM only explains
 the result and suggests actions.
 """
 
-    try:
-        response = client.chat.completions.create(
-            model=model_name,
-            messages=[
-                {
-                    "role": "system",
-                    "content": (
-                        "You are a concise predictive-maintenance assistant. "
-                        "Never invent sensor readings or claim certainty."
-                    )
-                },
-                {"role": "user", "content": prompt}
-            ]
-        )
+    last_error = None
+    for model_name in candidate_models:
+        try:
+            response = client.chat.completions.create(
+                model=model_name,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": (
+                            "You are a concise predictive-maintenance assistant. "
+                            "Never invent sensor readings or claim certainty."
+                        )
+                    },
+                    {"role": "user", "content": prompt}
+                ]
+            )
+            return response.choices[0].message.content.strip()
+        except Exception as e:
+            last_error = e
+            continue
 
-        return response.choices[0].message.content.strip()
-
-    except Exception as e:
-        return f"LLM error: {str(e)}"
+    return f"LLM error: {str(last_error)}"
 
 
 st.markdown(
