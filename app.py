@@ -310,13 +310,37 @@ def get_llm_client():
             api_key=api_key,
             base_url="https://api.groq.com/openai/v1"
         )
-        candidate_models = [
-            "meta-llama/llama-4-scout-17b-16e-instruct",
-            "meta-llama/llama-4-maverick-17b-128e-instruct",
-            "llama-3.3-70b-versatile",
-            "llama-3.1-8b-instant",
-            "moonshotai/kimi-k2-instruct",
-        ]
+        # Dynamically fetch the models this key actually has access to
+        try:
+            models_response = client.models.list()
+            all_model_ids = [m.id for m in models_response.data]
+
+            # Prefer known reliable chat models in priority order
+            preferred = [
+                "llama-3.3-70b-versatile",
+                "meta-llama/llama-4-scout-17b-16e-instruct",
+                "meta-llama/llama-4-maverick-17b-128e-instruct",
+                "llama-3.1-8b-instant",
+                "llama3-8b-8192",
+                "llama3-70b-8192",
+                "compound-beta",
+                "compound-beta-mini",
+            ]
+            # Keep preferred models that the key actually has access to
+            candidate_models = [m for m in preferred if m in all_model_ids]
+
+            # If none of the preferred ones are available, fall back to any
+            # model from the live list that looks like a text model
+            if not candidate_models:
+                candidate_models = [
+                    m for m in all_model_ids
+                    if "whisper" not in m
+                    and "tts" not in m
+                    and "vision" not in m.lower()
+                ]
+        except Exception:
+            # If model listing fails, try a safe minimal set
+            candidate_models = ["llama-3.1-8b-instant", "llama-3.3-70b-versatile"]
     else:
         client = OpenAI(api_key=api_key)
         candidate_models = ["gpt-4o-mini", "gpt-3.5-turbo", "gpt-4o"]
