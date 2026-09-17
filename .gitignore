@@ -20,3 +20,6 @@ catboost_info/
 # Operating System Files
 .DS_Store
 Thumbs.db
+
+# Streamlit Secrets (never commit API keys!)
+.streamlit/secrets.toml
