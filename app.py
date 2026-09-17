@@ -882,37 +882,48 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-with st.container():
-    quick_cols = st.columns(4)
-    quick_questions = [
-        "Why is this machine high risk?",
-        "Which sensor is most concerning?",
-        "What maintenance should I do?",
-        "Explain the prediction simply."
-    ]
+# Quick question buttons
+quick_cols = st.columns(4)
+quick_questions = [
+    "Why is this machine high risk?",
+    "Which sensor is most concerning?",
+    "What maintenance should I do?",
+    "Explain the prediction simply."
+]
+for i, q in enumerate(quick_questions):
+    if quick_cols[i].button(q, key=f"gemini_quick_{i}"):
+        st.session_state["chat_history"].append({"role": "user", "content": q})
+        answer = ask_gemini(q, st.session_state.get("current_prediction"))
+        st.session_state["chat_history"].append({"role": "assistant", "content": answer})
+        st.rerun()
 
-    for i, q in enumerate(quick_questions):
-        if quick_cols[i].button(q, key=f"gemini_quick_{i}"):
-            st.session_state["chat_history"].append({"role": "user", "content": q})
-            answer = ask_gemini(q, st.session_state.get("current_prediction"))
-            st.session_state["chat_history"].append({"role": "assistant", "content": answer})
-            st.rerun()
+# Chat history display
+for message in st.session_state.get("chat_history", []):
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
 
-    for message in st.session_state.get("chat_history", []):
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
+# Inline text input + Send button (always visible)
+input_col, btn_col = st.columns([8, 1])
+with input_col:
+    user_input = st.text_input(
+        label="chat_input",
+        label_visibility="collapsed",
+        placeholder="Ask Gemini about your machine...",
+        key="gemini_text_input"
+    )
+with btn_col:
+    send_clicked = st.button("Send ➤", use_container_width=True, key="gemini_send_btn")
+
+if send_clicked and user_input.strip():
+    st.session_state["chat_history"].append({"role": "user", "content": user_input.strip()})
+    answer = ask_gemini(user_input.strip(), st.session_state.get("current_prediction"))
+    st.session_state["chat_history"].append({"role": "assistant", "content": answer})
+    st.rerun()
 
 if st.session_state.get("chat_history"):
     if st.button("🗑️ Clear Conversation", key="clear_gemini_chat"):
         st.session_state["chat_history"] = []
         st.rerun()
-
-question = st.chat_input("Ask Gemini about your machine...")
-if question:
-    st.session_state["chat_history"].append({"role": "user", "content": question})
-    answer = ask_gemini(question, st.session_state.get("current_prediction"))
-    st.session_state["chat_history"].append({"role": "assistant", "content": answer})
-    st.rerun()
 
 # =========================================================
 # HISTORY
