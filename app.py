@@ -10,6 +10,11 @@ try:
 except ImportError:
     genai = None
 
+try:
+    from openai import OpenAI
+except ImportError:
+    OpenAI = None
+
 # =========================================================
 # PAGE CONFIG
 # =========================================================
@@ -476,14 +481,10 @@ with predict_col2:
 
 
 # =========================================================
-# GEMINI CONFIGURATION
+# AI CONFIGURATION (Supports Groq & Gemini)
 # =========================================================
 
-
-GEMINI_MODEL = "gemini-3.6-flash"
-GEMINI_FALLBACK_MODEL = "gemini-3.5-flash-lite"
-
-GEMINI_SYSTEM_PROMPT = """
+AI_SYSTEM_PROMPT = """
 You are a professional Predictive Maintenance AI Assistant.
 You analyze the current machine data and explain the CatBoost prediction.
 
@@ -496,22 +497,49 @@ Rules:
 - Explain technical concepts simply when appropriate.
 """
 
-def get_gemini_client():
-    if genai is None:
-        return None
-
-    # Try st.secrets first (Streamlit Cloud), then fall back to env var (local)
-    api_key = ""
+def get_ai_credentials():
+    groq_key = ""
+    gemini_key = ""
     try:
-        api_key = st.secrets.get("GEMINI_API_KEY", "")
+        groq_key = st.secrets.get("GROQ_API_KEY", "") or st.secrets.get("GROQ_KEY", "")
+        gemini_key = st.secrets.get("GEMINI_API_KEY", "")
+        gen_key = st.secrets.get("API_KEY", "")
+        if gen_key.startswith("gsk_") and not groq_key:
+            groq_key = gen_key
+        elif gen_key.startswith("AIza") and not gemini_key:
+            gemini_key = gen_key
     except Exception:
         pass
-    if not api_key:
-        api_key = os.getenv("GEMINI_API_KEY", "").strip()
-    if not api_key:
-        return None
 
-    return genai.Client(api_key=api_key)
+    if not groq_key:
+        groq_key = os.getenv("GROQ_API_KEY", "").strip() or os.getenv("GROQ_KEY", "").strip()
+    if not gemini_key:
+        gemini_key = os.getenv("GEMINI_API_KEY", "").strip()
+    if not groq_key and not gemini_key:
+        gen_key = os.getenv("API_KEY", "").strip()
+        if gen_key.startswith("gsk_"):
+            groq_key = gen_key
+        elif gen_key.startswith("AIza"):
+            gemini_key = gen_key
+
+    # Also read directly from .streamlit/secrets.toml if present
+    if not groq_key and not gemini_key:
+        try:
+            secrets_file = Path(".streamlit/secrets.toml")
+            if secrets_file.exists():
+                import tomllib
+                content = secrets_file.read_text(encoding="utf-8-sig")
+                data = tomllib.loads(content)
+                groq_key = data.get("GROQ_API_KEY", "") or data.get("GROQ_KEY", "")
+                gemini_key = data.get("GEMINI_API_KEY", "")
+        except Exception:
+            pass
+
+    if groq_key:
+        return "groq", groq_key
+    if gemini_key:
+        return "gemini", gemini_key
+    return None, None
 
 def get_recent_history():
     history = load_history()
@@ -519,45 +547,68 @@ def get_recent_history():
         return "No previous prediction history is available."
     return str(history.tail(10).to_dict(orient="records"))
 
-def generate_gemini_response(client, prompt):
-    """Call Gemini with automatic retry and a stable fallback model.
-
-    503/UNAVAILABLE can happen when a model is temporarily under heavy load.
-    Retry briefly, then fall back to Gemini 3.5 Flash-Lite.
-    """
-    import time
-
-    last_error = None
-    for attempt in range(3):
+def call_groq_llm(api_key, prompt):
+    if OpenAI is None:
+        raise ImportError("openai library is not installed. Please run `pip install openai`.")
+    client = OpenAI(api_key=api_key, base_url="https://api.groq.com/openai/v1")
+    models = ["qwen/qwen3.8-27b", "openai/gpt-oss-120b", "openai/gpt-oss-20b", "groq/compound-mini"]
+    last_err = None
+    for model in models:
         try:
-            return client.models.generate_content(
-                model=GEMINI_MODEL,
-                contents=prompt,
-                config={"system_instruction": GEMINI_SYSTEM_PROMPT}
+            resp = client.chat.completions.create(
+                model=model,
+                messages=[
+                    {"role": "system", "content": AI_SYSTEM_PROMPT},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.3,
+                max_tokens=1000
             )
+            content = resp.choices[0].message.content
+            if content and content.strip():
+                return content.strip()
         except Exception as e:
-            last_error = e
-            error_text = str(e)
-            is_temporary = (
-                "503" in error_text
-                or "UNAVAILABLE" in error_text
-                or "high demand" in error_text.lower()
-                or "temporarily" in error_text.lower()
-            )
-            if not is_temporary:
-                raise
-            if attempt < 2:
-                time.sleep(2 ** attempt)
+            last_err = e
+            continue
+    raise last_err if last_err else Exception("No Groq model response received.")
 
-    # Fallback model after repeated 503 errors.
-    try:
-        return client.models.generate_content(
-            model=GEMINI_FALLBACK_MODEL,
-            contents=prompt,
-            config={"system_instruction": GEMINI_SYSTEM_PROMPT}
+def call_gemini_llm(api_key, prompt):
+    if genai is None:
+        raise ImportError("google-genai library is not installed.")
+    import time
+    client = genai.Client(api_key=api_key)
+    models = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"]
+    last_err = None
+    for model in models:
+        try:
+            resp = client.models.generate_content(
+                model=model,
+                contents=prompt,
+                config={"system_instruction": AI_SYSTEM_PROMPT}
+            )
+            if resp.text:
+                return resp.text.strip()
+        except Exception as e:
+            last_err = e
+            time.sleep(1)
+            continue
+    raise last_err if last_err else Exception("No Gemini response.")
+
+def generate_ai_text(prompt):
+    provider, api_key = get_ai_credentials()
+    if not provider:
+        return None, (
+            "⚠️ AI is not connected.\n\n"
+            "Please add your `GROQ_API_KEY` (starts with `gsk_`) or `GEMINI_API_KEY` in `.streamlit/secrets.toml` "
+            "or in Streamlit Cloud Settings → Secrets."
         )
-    except Exception:
-        raise last_error
+    try:
+        if provider == "groq":
+            return call_groq_llm(api_key, prompt), None
+        else:
+            return call_gemini_llm(api_key, prompt), None
+    except Exception as e:
+        return None, f"⚠️ AI service error ({provider}): {str(e)}"
 
 def machine_context(record):
     if not record:
@@ -586,15 +637,6 @@ Normal Probability: {record.get("Normal Probability")}%
 """
 
 def ask_gemini(question, current_record=None):
-    client = get_gemini_client()
-
-    if client is None:
-        return (
-            "⚠️ Gemini is not connected.\n\n"
-            "Run `pip install -U google-genai` and set `GEMINI_API_KEY` "
-            "before starting Streamlit."
-        )
-
     prompt = f"""
 CURRENT MACHINE DATA:
 {machine_context(current_record)}
@@ -607,34 +649,13 @@ USER QUESTION:
 
 Answer directly and professionally. Use the current machine data when relevant.
 """
-    try:
-        response = generate_gemini_response(client, prompt)
-        return response.text.strip()
-    except Exception as e:
-        error_text = str(e)
-        if "503" in error_text or "UNAVAILABLE" in error_text or "high demand" in error_text.lower():
-            return (
-                "⚠️ Gemini is temporarily busy (503). The app already retried "
-                "and tried the fallback Gemini 3.5 Flash-Lite model. Please try "
-                "Predict again in a few seconds."
-            )
-        if "404" in error_text and ("gemini-2.5-flash" in error_text or "not found" in error_text.lower()):
-            return (
-                "⚠️ Gemini model was unavailable. The app is configured for "
-                "Gemini 3.6 Flash with a fallback model. Restart Streamlit and try again."
-            )
-        return f"⚠️ Gemini error: {error_text}"
+    result, err = generate_ai_text(prompt)
+    if err:
+        return err
+    return result
 
 def gemini_analysis(record):
-    """Generate the AI Analysis for the current prediction using Gemini."""
-    client = get_gemini_client()
-
-    if client is None:
-        return (
-            "⚠️ Gemini is not connected.\n\n"
-            "Set the GEMINI_API_KEY environment variable and restart Streamlit."
-        )
-
+    """Generate the AI Analysis for the current prediction."""
     prompt = f"""
 CURRENT MACHINE DATA
 {machine_context(record)}
@@ -658,24 +679,10 @@ that a mechanical failure has occurred.
 
 Do not invent any values or facts.
 """
-
-    try:
-        response = generate_gemini_response(client, prompt)
-        return response.text.strip()
-    except Exception as e:
-        error_text = str(e)
-        if "503" in error_text or "UNAVAILABLE" in error_text or "high demand" in error_text.lower():
-            return (
-                "⚠️ Gemini is temporarily busy (503). The app already retried "
-                "and tried the fallback Gemini 3.5 Flash-Lite model. Please try "
-                "Predict again in a few seconds."
-            )
-        if "404" in error_text and ("gemini-2.5-flash" in error_text or "not found" in error_text.lower()):
-            return (
-                "⚠️ Gemini model was unavailable. The app is configured for "
-                "Gemini 3.6 Flash with a fallback model. Restart Streamlit and try again."
-            )
-        return f"⚠️ Gemini error: {error_text}"
+    result, err = generate_ai_text(prompt)
+    if err:
+        return err
+    return result
 
 
 # =========================================================
