@@ -882,27 +882,30 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-chat_card_start = '<div class="card">'
-st.markdown(chat_card_start, unsafe_allow_html=True)
+with st.container():
+    quick_cols = st.columns(4)
+    quick_questions = [
+        "Why is this machine high risk?",
+        "Which sensor is most concerning?",
+        "What maintenance should I do?",
+        "Explain the prediction simply."
+    ]
 
-quick_cols = st.columns(4)
-quick_questions = [
-    "Why is this machine high risk?",
-    "Which sensor is most concerning?",
-    "What maintenance should I do?",
-    "Explain the prediction simply."
-]
+    for i, q in enumerate(quick_questions):
+        if quick_cols[i].button(q, key=f"gemini_quick_{i}"):
+            st.session_state["chat_history"].append({"role": "user", "content": q})
+            answer = ask_gemini(q, st.session_state.get("current_prediction"))
+            st.session_state["chat_history"].append({"role": "assistant", "content": answer})
+            st.rerun()
 
-for i, q in enumerate(quick_questions):
-    if quick_cols[i].button(q, key=f"gemini_quick_{i}"):
-        st.session_state["chat_history"].append({"role": "user", "content": q})
-        answer = ask_gemini(q, st.session_state.get("current_prediction"))
-        st.session_state["chat_history"].append({"role": "assistant", "content": answer})
+    for message in st.session_state.get("chat_history", []):
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+
+if st.session_state.get("chat_history"):
+    if st.button("🗑️ Clear Conversation", key="clear_gemini_chat"):
+        st.session_state["chat_history"] = []
         st.rerun()
-
-for message in st.session_state.get("chat_history", []):
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
 
 question = st.chat_input("Ask Gemini about your machine...")
 if question:
@@ -910,13 +913,6 @@ if question:
     answer = ask_gemini(question, st.session_state.get("current_prediction"))
     st.session_state["chat_history"].append({"role": "assistant", "content": answer})
     st.rerun()
-
-if st.session_state.get("chat_history"):
-    if st.button("🗑️ Clear Conversation", key="clear_gemini_chat"):
-        st.session_state["chat_history"] = []
-        st.rerun()
-
-st.markdown("</div>", unsafe_allow_html=True)
 
 # =========================================================
 # HISTORY
